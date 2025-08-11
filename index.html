@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MMA Desktop Game v17</title>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; background: #111; }
+    canvas { display: block; margin: auto; background: #222; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="1024" height="576"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const keys = {
+      left: false,
+      right: false,
+      punch: false,
+      block: false,
+      kick: false,
+      jump: false
+    };
+
+    document.addEventListener("keydown", e => {
+      switch (e.key.toLowerCase()) {
+        case "arrowleft": keys.left = true; break;
+        case "arrowright": keys.right = true; break;
+        case "z": keys.punch = true; break;
+        case "x": keys.block = true; break;
+        case "c": keys.kick = true; break;
+        case "v": keys.jump = true; break;
+      }
+    });
+    document.addEventListener("keyup", e => {
+      switch (e.key.toLowerCase()) {
+        case "arrowleft": keys.left = false; break;
+        case "arrowright": keys.right = false; break;
+        case "z": keys.punch = false; break;
+        case "x": keys.block = false; break;
+        case "c": keys.kick = false; break;
+        case "v": keys.jump = false; break;
+      }
+    });
+
+    const fighters = [
+      { id: "nic", x: 200 },
+      { id: "ty", x: 600 }
+    ];
+
+    const images = {};
+
+    function loadFighterImages(id) {
+      const actions = ["idle", "punch", "kick", "block", "hurt"];
+      images[id] = {};
+      actions.forEach(action => {
+        const img = new Image();
+        img.src = `sprites/${id}/${id}-${action}.png`;
+        img.onerror = () => {
+          // fallback: draw color block
+          const fallback = document.createElement('canvas');
+          fallback.width = fallback.height = 96;
+          const ctx2 = fallback.getContext('2d');
+          ctx2.fillStyle = '#'+Math.floor(Math.random()*16777215).toString(16);
+          ctx2.fillRect(0,0,96,96);
+          img.src = fallback.toDataURL();
+        };
+        images[id][action] = img;
+      });
+    }
+
+    fighters.forEach(f => loadFighterImages(f.id));
+
+    function drawFighter(fighter, action = "idle") {
+      const img = images[fighter.id][action];
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, fighter.x, 300, 96, 96);
+      } else {
+        ctx.fillStyle = "gray";
+        ctx.fillRect(fighter.x, 300, 96, 96);
+      }
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      fighters.forEach(f => {
+        let action = "idle";
+        if (f.id === "nic") {
+          if (keys.kick) action = "kick";
+          else if (keys.punch) action = "punch";
+          else if (keys.block) action = "block";
+        }
+        drawFighter(f, action);
+        if (f.id === "nic") {
+          if (keys.left) f.x -= 3;
+          if (keys.right) f.x += 3;
+        }
+      });
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
